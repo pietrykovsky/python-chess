@@ -1,7 +1,20 @@
 from abc import ABC, abstractmethod
 
-from .const import BOARD_SIZE
+from .const import BOARD_SIZE, COLOR_WHITE
 from .exception import InvalidMoveException
+
+
+class MoveMixin:
+    """
+    Mixin class for adding has_move functionality.
+    """
+
+    def __init__(self):
+        self._has_moved = False
+
+    @property
+    def has_moved(self):
+        return self._has_moved
 
 
 class Piece(ABC):
@@ -60,18 +73,17 @@ class Piece(ABC):
             self._position = target_position
         else:
             raise InvalidMoveException(
-                f"Move of {self} from {self._position} to {target_position} is invalid!"
+                f"Move of {self} from {self.position} to {target_position} is invalid!"
             )
 
     @abstractmethod
-    def can_move(self, target_position: tuple[int, int]):
+    def can_move(self, target_position: tuple[int, int]) -> bool:
         """
         Check if the move is allowed, does not consider the board rules or other pieces.
 
         :param target_position: The target position to move the piece to.
-        :raises NotImplementedError:
+        :return: True if move is valid and False otherwise
         """
-        raise NotImplementedError
 
 
 class Pawn(Piece):
@@ -79,11 +91,73 @@ class Pawn(Piece):
     Class representing a Pawn piece.
     """
 
+    def __init__(self, position: tuple[int, int], color: str):
+        """
+        Initializes a new instance of a Pawn.
+
+        :param position: The position of the piece on the board
+        :param color: The color of the piece
+        """
+        super().__init__(position, color)
+        self._has_moved = False
+
+    def __str__(self):
+        return "Pawn"
+
+    @property
+    def has_moved(self):
+        return self._has_moved
+
+    def move(self, target_position: tuple[int, int]):
+        super().move(target_position)
+        if not self.has_moved:
+            self._has_moved = True
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = self.position[1] - target_position[1]
+        dy = (
+            self.position[0] - target_position[0]
+            if self.color == COLOR_WHITE
+            else target_position[0] - self.position[0]
+        )
+        if (dy == 1 and dx == 0) or (dy == 2 and dx == 0 and not self.has_moved):
+            return True
+        return False
+
 
 class King(Piece):
     """
     Class representing a King piece.
     """
+
+    def __init__(self, position: tuple[int, int], color: str):
+        """
+        Initializes a new instance of a King.
+
+        :param position: The position of the piece on the board
+        :param color: The color of the piece
+        """
+        super().__init__(position, color)
+        self._has_moved = False
+
+    def __str__(self) -> str:
+        return "King"
+
+    @property
+    def has_moved(self):
+        return self._has_moved
+
+    def move(self, target_position: tuple[int, int]):
+        super().move(target_position)
+        if not self.has_moved:
+            self._has_moved = True
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = abs(self.position[1] - target_position[1])
+        dy = abs(self.position[0] - target_position[0])
+        if dx == 1 and dy in (0, 1) or dy == 1 and dx in (0, 1):
+            return True
+        return False
 
 
 class Queen(Piece):
@@ -91,11 +165,50 @@ class Queen(Piece):
     Class representing a Queen piece.
     """
 
+    def __str__(self) -> str:
+        return "Queen"
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = abs(self.position[1] - target_position[1])
+        dy = abs(self.position[0] - target_position[0])
+        if dx == dy != 0 or dx == 0 != dy or dx != 0 == dy:
+            return True
+        return False
+
 
 class Rook(Piece):
     """
     Class representing a Rook piece.
     """
+
+    def __init__(self, position: tuple[int, int], color: str):
+        """
+        Initializes a new instance of a Rook.
+
+        :param position: The position of the piece on the board
+        :param color: The color of the piece
+        """
+        super().__init__(position, color)
+        self._has_moved = False
+
+    def __str__(self) -> str:
+        return "Rook"
+
+    @property
+    def has_moved(self):
+        return self._has_moved
+
+    def move(self, target_position: tuple[int, int]):
+        super().move(target_position)
+        if not self.has_moved:
+            self._has_moved = True
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = abs(self.position[1] - target_position[1])
+        dy = abs(self.position[0] - target_position[0])
+        if dx == 0 != dy or dx != 0 == dy:
+            return True
+        return False
 
 
 class Knight(Piece):
@@ -103,8 +216,28 @@ class Knight(Piece):
     Class representing a Knight piece.
     """
 
+    def __str__(self) -> str:
+        return "Knight"
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = abs(self.position[1] - target_position[1])
+        dy = abs(self.position[0] - target_position[0])
+        if dx == 1 and dy == 2:
+            return True
+        return False
+
 
 class Bishop(Piece):
     """
     Class representing a Bishop piece.
     """
+
+    def __str__(self) -> str:
+        return "Bishop"
+
+    def can_move(self, target_position: tuple[int, int]) -> bool:
+        dx = abs(self.position[1] - target_position[1])
+        dy = abs(self.position[0] - target_position[0])
+        if dx == dy != 0:
+            return True
+        return False
