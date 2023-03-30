@@ -1,63 +1,110 @@
-from copy import deepcopy
+from abc import ABC, abstractmethod
+
+from .const import BOARD_SIZE
+from .exception import InvalidMoveException
 
 
-class Piece:
+class Piece(ABC):
     """Base class for pieces."""
 
-    def __init__(self, position, color):
+    def __init__(self, position: tuple[int, int], color: str):
         """
         Initializes a new instance of a Piece.
 
         :param position: The position of the piece on the board
-        :type position: tuple[int, int]
         :param color: The color of the piece
-        :type color: str
         """
-        self.position = position
-        self.color = color
+        self._color = color
+        self._position = position
 
-    def get_possible_moves(self, board):
+    @property
+    def position(self):
         """
-        Get possible moves for the piece on the board.
+        Get the current position of the piece.
+        """
+        return self._position
 
-        :param board: The board
-        :type board: chess.piece.Board
+    @property
+    def color(self):
+        """
+        Get the color of the piece.
+        """
+        return self._color
+
+    def get_possible_positions(
+        self, board_size: int = BOARD_SIZE
+    ) -> list[tuple[int, int]] | None:
+        """
+        Get possible moves for the piece on the board. Does not consider the board rules.
+
+        :param board_size: The size of the board
+        :return: A list of tuples containing possible target positions
+        or None if there are no possible.
+        """
+        positions = []
+        for row in range(board_size):
+            for col in range(board_size):
+                position = row, col
+                if self.can_move(target_position=position):
+                    positions.append(position)
+        return positions if len(positions) > 0 else None
+
+    def move(self, target_position: tuple[int, int]):
+        """
+        Update the position of the piece.
+
+        :param target_position: The target position to move the piece to.
+        :raises InvalidMoveException:
+        """
+        if self.can_move(target_position):
+            self._position = target_position
+        else:
+            raise InvalidMoveException(
+                f"Move of {self} from {self._position} to {target_position} is invalid!"
+            )
+
+    @abstractmethod
+    def can_move(self, target_position: tuple[int, int]):
+        """
+        Check if the move is allowed, does not consider the board rules or other pieces.
+
+        :param target_position: The target position to move the piece to.
+        :raises NotImplementedError:
         """
         raise NotImplementedError
 
-    def is_valid_move(self, target_position, board):
-        # not sure whether this should be here or in the board class, might be moved in the future
-        board_after_move = deepcopy(board)
-        board_after_move.update(
-            piece_position=self.position, target_position=target_position
-        )
-        if (
-            board_after_move.is_check(color=self.color)
-            and board.get_state(color=self.color, position=target_position) is not None
-        ):
-            return True
-        return False
-
 
 class Pawn(Piece):
-    pass
+    """
+    Class representing a Pawn piece.
+    """
 
 
 class King(Piece):
-    pass
+    """
+    Class representing a King piece.
+    """
 
 
 class Queen(Piece):
-    pass
+    """
+    Class representing a Queen piece.
+    """
 
 
 class Rook(Piece):
-    pass
+    """
+    Class representing a Rook piece.
+    """
 
 
 class Knight(Piece):
-    pass
+    """
+    Class representing a Knight piece.
+    """
 
 
 class Bishop(Piece):
-    pass
+    """
+    Class representing a Bishop piece.
+    """
